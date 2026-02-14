@@ -95,7 +95,7 @@ export default function CampaignShowcase() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % (campaigns.length * variants.length));
-    }, 1800); // Faster cycle: 1.8s
+    }, 1100); // Super Fast cycle: 1.1s
     return () => clearInterval(timer);
   }, []);
 
@@ -110,7 +110,7 @@ export default function CampaignShowcase() {
       {/* Background Ambience */}
       <motion.div 
         animate={{ backgroundColor: currentVariant.bg }}
-        transition={{ duration: 0.5 }} // Faster bg transition
+        transition={{ duration: 0.3 }} // Fast bg transition
         className="absolute inset-0 ease-in-out"
       />
       
@@ -143,9 +143,14 @@ export default function CampaignShowcase() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div 
-          className="w-[300px] h-[500px] md:w-[340px] md:h-[580px] rounded-xl overflow-hidden shadow-2xl relative border border-white/10 transition-colors duration-500"
-          style={{ backgroundColor: currentVariant.bg }}
+        <motion.div 
+          className="w-[300px] h-[500px] md:w-[340px] md:h-[580px] rounded-xl overflow-hidden shadow-2xl relative border border-white/10"
+          animate={{ 
+            backgroundColor: currentVariant.bg,
+            scale: [1, 1.02, 1], // Subtle "beat" on change
+            boxShadow: `0 0 40px -10px ${currentVariant.accent}40`
+          }}
+          transition={{ duration: 0.3, ease: "circOut" }}
         >
           {/* Top Bar */}
           <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/80 to-transparent z-20 flex items-center justify-end px-5">
@@ -159,10 +164,11 @@ export default function CampaignShowcase() {
                 alt="Headphones"
                 className="w-64 h-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                 animate={{ 
-                  y: [0, -10, 0],
+                  y: [0, -8, 0],
+                  scale: [1, 1.05, 1] // Pulse with the beat
                 }}
                 transition={{ 
-                  duration: 4,
+                  duration: 2.2, // Independent rhythm
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
@@ -174,11 +180,16 @@ export default function CampaignShowcase() {
             <motion.div 
               key={`${currentCampaign.id}-${currentVariant.name}`}
               className="absolute inset-0 flex flex-col items-center justify-center p-6 z-20"
-              // Faster entrance/exit with more aggressive skew
-              initial={{ x: 400, opacity: 0, skewX: -20 }}
-              animate={{ x: 0, opacity: 1, skewX: 0 }}
-              exit={{ x: -400, opacity: 0, skewX: 20 }}
-              transition={{ type: "spring", stiffness: 120, damping: 14, mass: 0.5 }}
+              // Aggressive, exciting transitions
+              initial={{ x: 500, opacity: 0, skewX: -30, filter: "blur(10px)" }}
+              animate={{ x: 0, opacity: 1, skewX: 0, filter: "blur(0px)" }}
+              exit={{ x: -500, opacity: 0, skewX: 30, filter: "blur(10px)" }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 400, // Very stiff/snappy
+                damping: 25, // Less damping for more energy
+                mass: 1 
+              }}
             >
                {/* Language Tag */}
                <div className="absolute top-4 left-5">
@@ -242,7 +253,7 @@ export default function CampaignShowcase() {
             style={{ backgroundColor: currentVariant.accent }}
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 1.8, ease: "linear" }} // Matches the 1.8s interval
+            transition={{ duration: 1.1, ease: "linear" }}
           />
 
         </div>
