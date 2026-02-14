@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Ad Matrix (6xN)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+Tamil:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Kannada:wght@400;700&family=Noto+Sans+Telugu:wght@400;700&family=Noto+Sans+Malayalam:wght@400;700&family=Noto+Sans+Oriya:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- GLOBAL UI STYLES --- */
+        body { font-family: 'Inter', sans-serif; background: #111; color: white; margin: 0; padding: 0; min-height: 100vh; }
+        
+        .container { max-width: 95%; margin: 0 auto; padding: 40px 20px; } /* Wider container for 6 cols */
+        h1 { font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+        h2 { font-weight: 600; color: #888; font-size: 1.2rem; margin-bottom: 30px; }
+
+        /* --- PAGE 1: INPUT FORM --- */
+        #page-input { display: block; max-width: 700px; margin: 0 auto; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #aaa; }
+        input[type="text"], textarea, select, input[type="password"] {
+            width: 100%; padding: 12px; background: #222; border: 1px solid #333; 
+            color: white; border-radius: 6px; font-family: inherit; box-sizing: border-box;
+        }
+        input[type="file"] { background: #222; padding: 10px; width: 100%; border-radius: 6px; }
+        
+        .btn-primary {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #4285f4, #d96570);
+            color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem;
+            cursor: pointer; transition: transform 0.2s; margin-top: 10px;
+        }
+        .btn-primary:hover { transform: scale(1.02); }
+
+        /* --- PAGE 2: OUTPUT GRID --- */
+        #page-output { display: none; }
+        
+        .grid-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .btn-secondary { background: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+
+        /* --- THE MATRIX (Updated for 6 Cols) --- */
+        .matrix-wrapper {
+            overflow-x: auto; /* Allows horizontal scrolling for many columns */
+            padding-bottom: 20px;
+        }
+
+        .matrix-container {
+            display: grid;
+            /* Dynamic columns: 6 columns, minimum width 300px each */
+            grid-template-columns: repeat(6, minmax(320px, 1fr)); 
+            gap: 20px;
+            width: 100%;
+        }
+
+        /* Column Headers */
+        .col-header {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 15px 10px;
+            background: #222;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            color: #4285f4;
+            text-transform: uppercase;
+            border-bottom: 2px solid #333;
+        }
+
+        .ad-card {
+            background: #1a1a1a; border-radius: 12px; overflow: hidden;
+            border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+        .ad-card:hover { transform: translateY(-5px); border-color: #555; }
+        
+        .ad-card-header { 
+            padding: 10px; border-bottom: 1px solid #333; background: #000; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .ad-variant-badge { 
+            display: inline-block; padding: 4px 8px; border-radius: 4px; 
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            background: #333; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+        }
+
+        .iframe-wrapper {
+            width: 100%;
+            aspect-ratio: 9/16; /* Vertical Ad Ratio */
+            background: #000;
+            position: relative;
+        }
+        
+        iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 4px solid #333;
+            border-top: 4px solid #d96570; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    </style>
+    
+    <script type="importmap">
+      { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h3 id="loading-text">Generating Ad Matrix...</h3>
+    </div>
+
+    <div class="container">
+        
+        <div id="page-input">
+            <h1>Gemini Ad Matrix</h1>
+            <h2>6 Languages. Infinite Variations.</h2>
+            
+            <div class="form-group">
+                <label>Gemini API Key</label>
+                <input type="password" id="apiKey" placeholder="Paste your API Key here">
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 20px;">
+                <div style="flex:1">
+                    <label>Logo (PNG)</label>
+                    <input type="file" id="logoFile" accept="image/*">
+                </div>
+                <div style="flex:1">
+                    <label>Product Image</label>
+                    <input type="file" id="productFile" accept="image/*">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Target Audience</label>
+                <input type="text" id="audience" value="Gen Z Gamers across India" placeholder="Who is this for?">
+            </div>
+
+            <div class="form-group">
+                <label>Languages (6 Required)</label>
+                <input type="text" id="languages" value="Hindi, Tamil, English, Kannada, Odia, Telugu" placeholder="Comma separated languages">
+            </div>
+
+            <div class="form-group">
+                <label>Variations / Styles (Comma Separated)</label>
+                <textarea id="variations" rows="2" placeholder="e.g. Minimalist, Loud">Minimalist Luxury, High Energy & Loud, Emotional Storytelling, FOMO/Urgency, Gen-Z Slang, Cyberpunk/Neon</textarea>
+                <small style="color: #666">Gemini will generate a row for each style listed here.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Campaign Context</label>
+                <textarea id="prompt" rows="2">Late night gaming sessions without disturbing the family.</textarea>
+            </div>
+            
+            <button id="generateBtn" class="btn-primary">Generate Matrix</button>
+        </div>
+
+        <div id="page-output">
+            <div class="grid-header">
+                <div>
+                    <h1>Campaign Matrix</h1>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="downloadHtmlBtn" class="btn-secondary" style="background: #4285f4;">Download HTML</button>
+                    <button onclick="location.reload()" class="btn-secondary">New Campaign</button>
+                </div>
+            </div>
+            
+            <div class="matrix-wrapper">
+                <div class="matrix-container" id="columnHeaders"></div>
+                <div class="matrix-container" id="adGrid"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // --- 1. THE AD TEMPLATE (Native Script Support including Odia) ---
+        function getAdTemplate(data, logoBase64, productBase64) {
+            return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    /* Import Indian fonts including Oriya */
+                    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600&family=Inter:wght@300;400;700&family=Noto+Sans+Tamil:wght@900&family=Noto+Sans+Devanagari:wght@900&family=Noto+Sans+Kannada:wght@900&family=Noto+Sans+Telugu:wght@900&family=Noto+Sans+Oriya:wght@900&display=swap');
+                    
+                    body { margin: 0; overflow: hidden; background: ${data.bgColor}; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+                    
+                    /* DYNAMIC COLORS */
+                    :root { --accent: ${data.accentColor}; --text-main: ${data.textColor}; }
+
+                    #ad-container {
+                        width: 100%; height: 100%; position: relative; overflow: hidden;
+                        background: ${data.bgGradient};
+                    }
+
+                    .logo { position: absolute; top: 15px; right: 15px; width: 50px; opacity: 0; z-index: 100; }
+                    .product { 
+                        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+                        width: 75%; z-index: 20; opacity: 0;
+                        filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+                    }
+
+                    .scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
+
+                    /* SCENE 1: NOISE (Native Scripts) */
+                    .noise-container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; }
+                    .noise-word {
+                        font-family: 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Oriya', sans-serif;
+                        font-size: 2rem; font-weight: 900; text-transform: uppercase;
+                        color: rgba(255,255,255,0.2); opacity: 0; line-height: 1.1;
+                    }
+
+                    /* SCENE 2: REVEAL */
+                    .tagline { 
+                        position: absolute; bottom: 60px; width: 100%; text-align: center; 
+                        color: var(--text-main); opacity: 0; z-index: 30; padding: 0 10px; box-sizing: border-box;
+                    }
+                    .main-copy { 
+                        font-family: 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Oriya', sans-serif;
+                        font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; line-height: 1.2;
+                        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                    }
+                    .sub-copy { font-size: 0.7rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+
+                    .pulse {
+                        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                        width: 10px; height: 10px; border-radius: 50%;
+                        background: radial-gradient(circle, var(--accent) 0%, rgba(0,0,0,0) 70%);
+                        opacity: 0; z-index: 10;
+                    }
+                </style>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"><\/script>
+            </head>
+            <body>
+                <div id="ad-container">
+                    <img src="${logoBase64}" class="logo">
+                    
+                    <div class="scene" id="scene-noise">
+                        <div class="noise-container">
+                            ${data.noiseWords.map(w => `<div class="noise-word">${w}</div>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="scene" id="scene-product">
+                        <div class="pulse"></div>
+                        <img src="${productBase64}" class="product">
+                        <div class="tagline">
+                            <div class="main-copy">${data.headline}</div>
+                            <div class="sub-copy">${data.subline}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    const tl = gsap.timeline({ repeat: -1, repeatDelay: 3 });
+                    
+                    // 1. Intro
+                    tl.to(".logo", { opacity: 1, duration: 1 });
+                    tl.to(".noise-word", {
+                        opacity: 1, y: 0, scale: 1, color: "#fff",
+                        duration: 0.5, stagger: 0.15, ease: "back.out(1.7)"
+                    });
+
+                    // 2. Shake (Chaos)
+                    tl.to(".noise-word", {
+                        x: "random(-2, 2)", y: "random(-2, 2)", color: "${data.accentColor}",
+                        duration: 0.05, repeat: 10, yoyo: true
+                    });
+
+                    // 3. Silence
+                    tl.to("#scene-noise", { opacity: 0, scale: 1.5, duration: 0.2, ease: "power4.in" });
+
+                    // 4. Product
+                    tl.to(".pulse", { scale: 40, opacity: 0.6, duration: 1 });
+                    tl.to(".product", { opacity: 1, scale: 1, duration: 1.2, ease: "elastic.out(1, 0.7)" }, "-=0.8");
+                    tl.to(".tagline", { opacity: 1, y: -10, duration: 0.8 }, "-=0.5");
+                    
+                    // 5. Float
+                    tl.to(".product", { y: "-=10", duration: 2, yoyo: true, repeat: 1, ease: "sine.inOut" });
+
+                    // 6. Loop Out
+                    tl.to(["#scene-product", ".logo"], { opacity: 0, duration: 0.5, delay: 1 });
+                <\/script>
+            </body>
+            </html>
+            `;
+        }
+
+        // --- 2. UTILS ---
+        const fileToBase64 = (file) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
+
+        const fileToPart = async (file) => {
+            const base64 = await fileToBase64(file);
+            return { inlineData: { data: base64.split(',')[1], mimeType: file.type } };
+        };
+
+        // --- 3. LOGIC ---
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const logoFile = document.getElementById('logoFile').files[0];
+            const productFile = document.getElementById('productFile').files[0];
+            const rawLangs = document.getElementById('languages').value.split(',').map(s => s.trim());
+            const rawVariations = document.getElementById('variations').value.split(',').map(s => s.trim());
+            
+            if (!apiKey || !logoFile || !productFile || rawLangs.length < 6) {
+                alert("Please enter API Key, upload images, and ensure there are 6 languages.");
+                return;
+            }
+
+            // UI Loading
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-text').innerText = `Generating ${rawLangs.length} Languages x ${rawVariations.length} Variations...`;
+            
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); // Using Flash for speed with large matrix
+
+                const logoPart = await fileToPart(logoFile);
+                const productPart = await fileToPart(productFile);
+                const logoBase64 = await fileToBase64(logoFile);
+                const productBase64 = await fileToBase64(productFile);
+
+                // --- PROMPT FOR 6xN MATRIX ---
+                const promptText = `
+                Role: Senior Creative Director for India.
+                Context: ${document.getElementById('prompt').value}
+                Target Audience: ${document.getElementById('audience').value}
+                
+                TASK: Generate a Ad Matrix of size: ${rawLangs.length} Columns (Languages) x ${rawVariations.length} Rows (Variations).
+                
+                COLUMNS (LANGUAGES):
+                ${rawLangs.join(', ')}
+
+                ROWS (VARIATIONS):
+                ${rawVariations.join(', ')}
+
+                REQUIREMENTS:
+                1. Analyze the uploaded images to determine color palettes (bgGradient, accentColor, textColor).
+                2. **CRITICAL**: The 'noiseWords' and 'headline' MUST be in the correct script for that column's language (Devanagari for Hindi, Kannada script for Kannada, Oriya script for Odia, etc.).
+                3. Return strictly JSON. No markdown formatting.
+                4. For "noiseWords", give me 2-3 punchy words relevant to the variation style in the target language.
+                
+                OUTPUT STRUCTURE:
+                {
+                    "columns": [
+                        {
+                            "language": "Language Name",
+                            "variations": [
+                                { "style": "Variation Name 1", "noiseWords": ["...", "..."], "headline": "...", "subline": "...", "bgGradient": "linear-gradient(...)", "bgColor": "#hex", "accentColor": "#hex", "textColor": "#hex" },
+                                { "style": "Variation Name 2", ... }
+                                // Ensure you match the exact number of variations requested
+                            ]
+                        }
+                        // Repeat for all languages
+                    ]
+                }
+                `;
+
+                const result = await model.generateContent([promptText, logoPart, productPart]);
+                const responseText = result.response.text();
+                const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const matrixData = JSON.parse(cleanJson);
+
+                // --- RENDER ---
+                const headerContainer = document.getElementById('columnHeaders');
+                const gridContainer = document.getElementById('adGrid');
+                headerContainer.innerHTML = '';
+                gridContainer.innerHTML = '';
+
+                // 1. Render Headers (Dynamic Columns)
+                matrixData.columns.forEach(col => {
+                    const h = document.createElement('div');
+                    h.className = 'col-header';
+                    h.innerText = col.language;
+                    headerContainer.appendChild(h);
+                });
+
+                // 2. Render Grid (Transposing Columns to Rows for visual grid)
+                // We loop through the Number of Variations (Rows) first
+                const numRows = matrixData.columns[0].variations.length;
+
+                for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
+                    matrixData.columns.forEach(col => {
+                        // Safety check in case of generation mismatch
+                        if(col.variations[rowIdx]) {
+                            const variant = col.variations[rowIdx];
+                            const card = document.createElement('div');
+                            card.className = 'ad-card';
+                            
+                            const htmlContent = getAdTemplate(variant, logoBase64, productBase64);
+                            
+                            card.innerHTML = `
+                                <div class="ad-card-header">
+                                    <span class="ad-variant-badge">${variant.style}</span>
+                                </div>
+                                <div class="iframe-wrapper">
+                                    <iframe srcdoc='${htmlContent.replace(/'/g, "&apos;")}'></iframe>
+                                </div>
+                            `;
+                            gridContainer.appendChild(card);
+                        }
+                    });
+                }
+
+                // Switch Views
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('page-input').style.display = 'none';
+                document.getElementById('page-output').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+        // --- 4. DOWNLOAD LOGIC ---
+        document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
+            // 1. Capture the CSS (to keep the dark theme and grid layout)
+            const styles = document.querySelector('style').innerHTML;
+
+            // 2. Capture the Generated Grid
+            // We clone the node to manipulate it (remove buttons) without affecting the live view
+            const outputClone = document.getElementById('page-output').cloneNode(true);
+            
+            // Remove the buttons from the export so it looks like a clean presentation
+            const buttons = outputClone.querySelectorAll('button');
+            buttons.forEach(btn => btn.remove());
+            
+            // Ensure the output is visible in the exported file
+            outputClone.style.display = 'block';
+
+            // 3. Construct the Standalone HTML File
+            const fileContent = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Gemini Ad Matrix Export</title>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+                <style>
+                    ${styles}
+                    /* Export specific overrides */
+                    body { background: #111; overflow-y: auto; padding: 20px; }
+                    .container { max-width: 95%; margin: 0 auto; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    ${outputClone.outerHTML}
+                </div>
+            </body>
+            </html>
+            `;
+
+            // 4. Trigger Download
+            const blob = new Blob([fileContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // Name the file with a timestamp
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            a.href = url;
+            a.download = `Gemini-Ad-Matrix-${timestamp}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
