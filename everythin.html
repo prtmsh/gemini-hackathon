@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Omni-Channel Campaign Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+Tamil:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+Kannada:wght@400;700&family=Noto+Sans+Telugu:wght@400;700&family=Noto+Sans+Malayalam:wght@400;700&family=Noto+Sans+Oriya:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- GLOBAL UI STYLES --- */
+        :root {
+            --bg-body: #0a0a0a;
+            --bg-panel: #141414;
+            --border: #2a2a2a;
+            --primary: #4285f4;
+            --accent: #d96570;
+            --text-main: #ffffff;
+            --text-muted: #888888;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; }
+        
+        .container { max-width: 96%; margin: 0 auto; padding: 40px 20px; }
+        
+        h1 { font-weight: 800; letter-spacing: -0.5px; margin: 0 0 10px 0; font-size: 2rem; }
+        h2 { font-weight: 400; color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px; }
+        h3 { border-left: 4px solid var(--primary); padding-left: 15px; margin-top: 50px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; color: var(--text-muted); }
+
+        /* --- INPUT FORM --- */
+        #page-input { display: block; max-width: 700px; margin: 0 auto; animation: fadeIn 0.5s ease; }
+        
+        .section-box {
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 25px; margin-bottom: 25px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+        
+        input[type="text"], textarea, input[type="password"] {
+            width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); 
+            color: white; border-radius: 6px; font-family: inherit; box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); outline: none; }
+
+        /* Brand Kit Specifics */
+        .brand-kit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .file-drop {
+            border: 1px dashed var(--border); background: #000;
+            padding: 20px; border-radius: 6px; text-align: center; cursor: pointer;
+            transition: 0.2s;
+        }
+        .file-drop:hover { border-color: var(--text-muted); background: #0f0f0f; }
+        .file-drop input { display: none; }
+        .file-drop span { font-size: 0.8rem; color: var(--text-muted); pointer-events: none; }
+
+        .url-scraper { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-scrape {
+            background: var(--border); color: white; border: none; padding: 0 20px;
+            border-radius: 6px; cursor: pointer; font-weight: 600; white-space: nowrap;
+        }
+        .btn-scrape:hover { background: #333; }
+
+        .btn-primary {
+            width: 100%; padding: 18px; background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 1.1rem;
+            cursor: pointer; transition: transform 0.2s; margin-top: 10px;
+        }
+        .btn-primary:hover { transform: scale(1.01); box-shadow: 0 10px 30px rgba(66, 133, 244, 0.3); }
+
+        /* --- OUTPUT PAGE --- */
+        #page-output { display: none; animation: fadeIn 1s ease; }
+        
+        .header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .btn-secondary { background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        .btn-secondary:hover { background: #222; }
+
+        /* --- VIDEO MATRIX --- */
+        .matrix-wrapper { overflow-x: auto; padding-bottom: 20px; }
+        .matrix-container {
+            display: grid; grid-template-columns: repeat(6, minmax(300px, 1fr)); 
+            gap: 20px; width: 100%;
+        }
+        .col-header {
+            text-align: center; font-size: 0.9rem; font-weight: 700; padding: 15px;
+            background: var(--bg-panel); border-radius: 8px; margin-bottom: 10px;
+            color: var(--primary); text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 2px solid var(--border);
+        }
+        .ad-card {
+            background: #000; border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border); position: relative;
+        }
+        .ad-variant-badge { 
+            position: absolute; top: 10px; left: 10px; z-index: 10;
+            padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; 
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); color: #fff; text-transform: uppercase; border: 1px solid #333;
+        }
+        .iframe-wrapper { width: 100%; aspect-ratio: 9/16; background: #111; }
+        iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+
+        /* --- STATIC GALLERY --- */
+        .static-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px; padding: 20px 0;
+        }
+        .static-card {
+            aspect-ratio: 4/5; /* Social Post Ratio */
+            background: var(--bg-panel); border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border); position: relative;
+            transition: transform 0.3s ease, border-color 0.3s;
+            cursor: pointer;
+        }
+        .static-card:hover { transform: translateY(-5px); border-color: var(--text-muted); }
+        
+        .static-art { position: absolute; top:0; left:0; width: 100%; height: 100%; opacity: 0.6; }
+        .static-art svg { width: 100%; height: 100%; object-fit: cover; }
+        
+        .static-product {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%);
+            width: 80%; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5));
+            transition: transform 0.3s;
+        }
+        .static-card:hover .static-product { transform: translate(-50%, -65%) scale(1.05); }
+
+        .static-info {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 20px; box-sizing: border-box;
+            background: linear-gradient(to top, #000 0%, transparent 100%);
+        }
+        .static-tag { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .static-headline { font-size: 1.2rem; font-weight: 700; line-height: 1.2; margin: 5px 0; }
+        
+        /* --- UTILS --- */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 3px solid #333;
+            border-top: 3px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        .loading-log { font-family: monospace; color: #666; margin-top: 10px; font-size: 0.9rem; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+    
+    <script type="importmap">
+      { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h2 id="loading-text">Initializing Gemini...</h2>
+        <div class="loading-log" id="loading-log"></div>
+    </div>
+
+    <div class="container">
+        
+        <div id="page-input">
+            <h1>New Campaign</h1>
+            <h2>Omni-channel generation powered by Gemini 2.0</h2>
+            
+            <div class="section-box">
+                <div class="form-group">
+                    <label>Gemini API Key</label>
+                    <input type="password" id="apiKey" placeholder="Paste your API Key here">
+                </div>
+            </div>
+
+            <div class="section-box">
+                <label style="margin-bottom: 15px; font-size: 1rem;">Brand Kit</label>
+                
+                <div class="url-scraper">
+                    <input type="text" id="scrapeUrl" placeholder="https://www.yourbrand.com (Optional Scrape)">
+                    <button class="btn-scrape" id="btnScrape">Scrape Assets</button>
+                </div>
+
+                <div class="brand-kit-grid">
+                    <label class="file-drop">
+                        <input type="file" id="logoFile" accept="image/*">
+                        <span id="logoLabel">Upload Logo (PNG)</span>
+                    </label>
+                    <label class="file-drop">
+                        <input type="file" id="productFile" accept="image/*">
+                        <span id="productLabel">Upload Product Shot</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="form-group">
+                    <label>Target Audience</label>
+                    <input type="text" id="audience" value="Gen Z Gamers across India" placeholder="Who is this for?">
+                </div>
+
+                <div class="form-group">
+                    <label>Languages (6 Required for Matrix)</label>
+                    <input type="text" id="languages" value="Hindi, Tamil, English, Kannada, Odia, Telugu">
+                </div>
+
+                <div class="form-group">
+                    <label>Variations / Styles (Comma Separated)</label>
+                    <textarea id="variations" rows="2">Minimalist Luxury, High Energy & Loud, Emotional Storytelling, Cyberpunk/Neon</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Campaign Context</label>
+                    <textarea id="prompt" rows="2">Late night gaming sessions without disturbing the family.</textarea>
+                </div>
+            </div>
+            
+            <button id="generateBtn" class="btn-primary">Generate Omni-Channel Assets</button>
+        </div>
+
+        <div id="page-output">
+            <div class="header-actions">
+                <div>
+                    <h1>Campaign Assets</h1>
+                    <div style="color: #666; font-size: 0.9rem;">Generated via Gemini 2.0 Flash</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="downloadHtmlBtn" class="btn-secondary" style="background: var(--primary); border:none;">Download HTML Report</button>
+                    <button onclick="location.reload()" class="btn-secondary">New Campaign</button>
+                </div>
+            </div>
+            
+            <h3>Video Ad Matrix (HTML5/GSAP)</h3>
+            <div class="matrix-wrapper">
+                <div class="matrix-container" id="columnHeaders"></div>
+                <div class="matrix-container" id="adGrid"></div>
+            </div>
+
+            <h3>Social Static Assets</h3>
+            <div class="static-grid" id="staticGrid"></div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // --- UI HELPERS ---
+        const log = (msg) => document.getElementById('loading-log').innerText = `> ${msg}`;
+        const updateFileLabel = (id, labelId) => {
+            document.getElementById(id).addEventListener('change', (e) => {
+                if(e.target.files[0]) document.getElementById(labelId).innerText = e.target.files[0].name;
+            });
+        };
+        updateFileLabel('logoFile', 'logoLabel');
+        updateFileLabel('productFile', 'productLabel');
+
+        // Scrape Button Simulation
+        document.getElementById('btnScrape').addEventListener('click', () => {
+            const btn = document.getElementById('btnScrape');
+            const originalText = btn.innerText;
+            const url = document.getElementById('scrapeUrl').value;
+            if(!url) return alert("Enter a URL first");
+
+            btn.innerText = "Scraping...";
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerText = "Assets Found!";
+                btn.style.background = "#4caf50";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                    btn.style.background = "";
+                }, 2000);
+            }, 1500);
+        });
+
+
+        // --- UTILS ---
+        const fileToBase64 = (file) => new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
+
+        const fileToPart = async (file) => {
+            const base64 = await fileToBase64(file);
+            return { inlineData: { data: base64.split(',')[1], mimeType: file.type } };
+        };
+
+        // --- TEMPLATE: VIDEO AD ---
+        function getVideoTemplate(data, logoBase64, productBase64) {
+            return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@600&family=Inter:wght@300;400;700&family=Noto+Sans+Tamil:wght@900&family=Noto+Sans+Devanagari:wght@900&family=Noto+Sans+Kannada:wght@900&family=Noto+Sans+Telugu:wght@900&family=Noto+Sans+Oriya:wght@900&display=swap');
+                    body { margin: 0; overflow: hidden; background: ${data.bgColor}; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+                    :root { --accent: ${data.accentColor}; --text-main: ${data.textColor}; }
+                    #ad-container { width: 100%; height: 100%; position: relative; overflow: hidden; background: ${data.bgGradient}; }
+                    .logo { position: absolute; top: 15px; right: 15px; width: 40px; opacity: 0; z-index: 100; }
+                    .product { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); width: 70%; z-index: 20; opacity: 0; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6)); }
+                    .scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
+                    .noise-container { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; }
+                    .noise-word { font-family: 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Oriya', sans-serif; font-size: 2rem; font-weight: 900; text-transform: uppercase; color: rgba(255,255,255,0.2); opacity: 0; line-height: 1.1; }
+                    .tagline { position: absolute; bottom: 50px; width: 100%; text-align: center; color: var(--text-main); opacity: 0; z-index: 30; padding: 0 10px; box-sizing: border-box; }
+                    .main-copy { font-family: 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Kannada', 'Noto Sans Telugu', 'Noto Sans Oriya', sans-serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+                    .sub-copy { font-size: 0.6rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+                    .pulse { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0%, rgba(0,0,0,0) 70%); opacity: 0; z-index: 10; }
+                </style>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"><\/script>
+            </head>
+            <body>
+                <div id="ad-container">
+                    <img src="${logoBase64}" class="logo">
+                    <div class="scene" id="scene-noise">
+                        <div class="noise-container">${data.noiseWords.map(w => `<div class="noise-word">${w}</div>`).join('')}</div>
+                    </div>
+                    <div class="scene" id="scene-product">
+                        <div class="pulse"></div>
+                        <img src="${productBase64}" class="product">
+                        <div class="tagline">
+                            <div class="main-copy">${data.headline}</div>
+                            <div class="sub-copy">${data.subline}</div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    const tl = gsap.timeline({ repeat: -1, repeatDelay: 3 });
+                    tl.to(".logo", { opacity: 1, duration: 1 });
+                    tl.to(".noise-word", { opacity: 1, y: 0, scale: 1, color: "#fff", duration: 0.5, stagger: 0.15, ease: "back.out(1.7)" });
+                    tl.to(".noise-word", { x: "random(-2, 2)", y: "random(-2, 2)", color: "${data.accentColor}", duration: 0.05, repeat: 10, yoyo: true });
+                    tl.to("#scene-noise", { opacity: 0, scale: 1.5, duration: 0.2, ease: "power4.in" });
+                    tl.to(".pulse", { scale: 40, opacity: 0.6, duration: 1 });
+                    tl.to(".product", { opacity: 1, scale: 1, duration: 1.2, ease: "elastic.out(1, 0.7)" }, "-=0.8");
+                    tl.to(".tagline", { opacity: 1, y: -10, duration: 0.8 }, "-=0.5");
+                    tl.to(".product", { y: "-=10", duration: 2, yoyo: true, repeat: 1, ease: "sine.inOut" });
+                    tl.to(["#scene-product", ".logo"], { opacity: 0, duration: 0.5, delay: 1 });
+                <\/script>
+            </body>
+            </html>`;
+        }
+
+        // --- MAIN LOGIC ---
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const logoFile = document.getElementById('logoFile').files[0];
+            const productFile = document.getElementById('productFile').files[0];
+            const rawLangs = document.getElementById('languages').value.split(',').map(s => s.trim());
+            const rawVariations = document.getElementById('variations').value.split(',').map(s => s.trim());
+            const context = document.getElementById('prompt').value;
+
+            if (!apiKey || !logoFile || !productFile) {
+                alert("Please complete the Brand Kit and API Key.");
+                return;
+            }
+
+            // UI Init
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-text').innerText = "Generating Campaign Assets...";
+            
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+                const logoPart = await fileToPart(logoFile);
+                const productPart = await fileToPart(productFile);
+                const logoBase64 = await fileToBase64(logoFile);
+                const productBase64 = await fileToBase64(productFile);
+
+                // --- 1. GENERATE VIDEO MATRIX ---
+                log("Analyzing Brand Kit & Generating Video Copy...");
+                
+                const matrixPrompt = `
+                Role: Senior Creative Director.
+                Context: ${context}
+                Task: Generate Ad Matrix JSON.
+                Columns: ${rawLangs.join(', ')}
+                Rows: ${rawVariations.join(', ')}
+                Requirements:
+                1. Determine colors from images (bgGradient, accentColor, textColor).
+                2. 'noiseWords' & 'headline' MUST be in the correct script for that language.
+                3. Return strictly valid JSON.
+                Structure: { "columns": [ { "language": "...", "variations": [ { "style": "...", "noiseWords": ["..", ".."], "headline": "...", "subline": "...", "bgGradient": "...", "bgColor": "#hex", "accentColor": "#hex", "textColor": "#hex" } ] } ] }
+                `;
+
+                const matrixResult = await model.generateContent([matrixPrompt, logoPart, productPart]);
+                const matrixJson = JSON.parse(matrixResult.response.text().replace(/```json|```/g, '').trim());
+
+                // Render Video Matrix
+                log("Rendering Video Assets...");
+                const headerContainer = document.getElementById('columnHeaders');
+                const gridContainer = document.getElementById('adGrid');
+                headerContainer.innerHTML = ''; gridContainer.innerHTML = '';
+
+                matrixJson.columns.forEach(col => {
+                    const h = document.createElement('div'); h.className = 'col-header'; h.innerText = col.language;
+                    headerContainer.appendChild(h);
+                });
+
+                const numRows = matrixJson.columns[0].variations.length;
+                for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
+                    matrixJson.columns.forEach(col => {
+                        if(col.variations[rowIdx]) {
+                            const variant = col.variations[rowIdx];
+                            const card = document.createElement('div'); card.className = 'ad-card';
+                            const htmlContent = getVideoTemplate(variant, logoBase64, productBase64);
+                            card.innerHTML = `<span class="ad-variant-badge">${variant.style}</span>
+                                <div class="iframe-wrapper"><iframe srcdoc='${htmlContent.replace(/'/g, "&apos;")}'></iframe></div>`;
+                            gridContainer.appendChild(card);
+                        }
+                    });
+                }
+
+                // --- 2. GENERATE STATIC GALLERY ---
+                log("Designing Static Social Assets...");
+                
+                const staticPrompt = `
+                Task: Create 4 distinct Static Ad Concepts for Social Media.
+                Context: ${context}
+                Target: ${document.getElementById('audience').value}
+                Requirements:
+                1. Create 4 variations based on different Indian Cities (Mumbai, Bangalore, Delhi, Chennai).
+                2. Provide an SVG string for an abstract background pattern for each.
+                3. Short punchy headline in English.
+                Output JSON: [ { "city": "...", "headline": "...", "svg": "<svg>...</svg>", "color": "#hex" } ]
+                `;
+
+                const staticResult = await model.generateContent([staticPrompt, productPart]);
+                const staticJson = JSON.parse(staticResult.response.text().replace(/```json|```/g, '').trim());
+
+                // Render Static Gallery
+                const staticGrid = document.getElementById('staticGrid');
+                staticGrid.innerHTML = '';
+                
+                staticJson.forEach(item => {
+                    const sCard = document.createElement('div');
+                    sCard.className = 'static-card';
+                    sCard.innerHTML = `
+                        <div class="static-art" style="color: ${item.color}">${item.svg}</div>
+                        <img src="${productBase64}" class="static-product">
+                        <div class="static-info">
+                            <div class="static-tag" style="color:${item.color}">${item.city}</div>
+                            <div class="static-headline">${item.headline}</div>
+                        </div>
+                    `;
+                    staticGrid.appendChild(sCard);
+                });
+
+                // Finalize
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('page-input').style.display = 'none';
+                document.getElementById('page-output').style.display = 'block';
+
+            } catch (err) {
+                console.error(err);
+                alert("Generation Error: " + err.message);
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+
+        // --- EXPORT LOGIC ---
+        document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
+            const styles = document.querySelector('style').innerHTML;
+            const outputClone = document.getElementById('page-output').cloneNode(true);
+            
+            // Clean up for export
+            outputClone.querySelectorAll('button').forEach(b => b.remove());
+            outputClone.style.display = 'block';
+
+            const fileContent = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Campaign Export</title>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+                <style>${styles} body { padding: 40px; } .container { max-width: 100%; } </style>
+            </head>
+            <body>
+                <div class="container">${outputClone.outerHTML}</div>
+            </body>
+            </html>`;
+
+            const blob = new Blob([fileContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Gemini-Omni-Campaign-${Date.now()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+    </script>
+</body>
+</html>

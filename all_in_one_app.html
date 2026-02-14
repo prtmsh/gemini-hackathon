@@ -169,9 +169,13 @@
                 <div>
                     <h1>Campaign Matrix</h1>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
                     <button id="downloadHtmlBtn" class="btn-secondary" style="background: #4285f4;">Download HTML</button>
                     <button onclick="location.reload()" class="btn-secondary">New Campaign</button>
+                    
+                    <a href="simple.html" class="btn-secondary" style="background: #d96570; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                        Next Step &rarr;
+                    </a>
                 </div>
             </div>
             
@@ -357,7 +361,6 @@
                 2. **CRITICAL**: The 'noiseWords' and 'headline' MUST be in the correct script for that column's language (Devanagari for Hindi, Kannada script for Kannada, Oriya script for Odia, etc.).
                 3. Return strictly JSON. No markdown formatting.
                 4. For "noiseWords", give me 2-3 punchy words relevant to the variation style in the target language.
-                
                 OUTPUT STRUCTURE:
                 {
                     "columns": [
