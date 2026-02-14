@@ -95,7 +95,7 @@ export default function CampaignShowcase() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % (campaigns.length * variants.length));
-    }, 3500); // Slightly slower to appreciate the animation
+    }, 1800); // Faster cycle: 1.8s
     return () => clearInterval(timer);
   }, []);
 
@@ -110,7 +110,8 @@ export default function CampaignShowcase() {
       {/* Background Ambience */}
       <motion.div 
         animate={{ backgroundColor: currentVariant.bg }}
-        className="absolute inset-0 transition-colors duration-1000 ease-in-out"
+        transition={{ duration: 0.5 }} // Faster bg transition
+        className="absolute inset-0 ease-in-out"
       />
       
       {/* Grid Pattern Overlay */}
@@ -140,10 +141,10 @@ export default function CampaignShowcase() {
         className="relative z-10 mt-16"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.3 }}
       >
         <div 
-          className="w-[300px] h-[500px] md:w-[340px] md:h-[580px] rounded-xl overflow-hidden shadow-2xl relative border border-white/10 transition-colors duration-1000"
+          className="w-[300px] h-[500px] md:w-[340px] md:h-[580px] rounded-xl overflow-hidden shadow-2xl relative border border-white/10 transition-colors duration-500"
           style={{ backgroundColor: currentVariant.bg }}
         >
           {/* Top Bar */}
@@ -173,10 +174,11 @@ export default function CampaignShowcase() {
             <motion.div 
               key={`${currentCampaign.id}-${currentVariant.name}`}
               className="absolute inset-0 flex flex-col items-center justify-center p-6 z-20"
-              initial={{ x: 300, opacity: 0, skewX: -10 }}
+              // Faster entrance/exit with more aggressive skew
+              initial={{ x: 400, opacity: 0, skewX: -20 }}
               animate={{ x: 0, opacity: 1, skewX: 0 }}
-              exit={{ x: -300, opacity: 0, skewX: 10 }}
-              transition={{ type: "spring", stiffness: 70, damping: 15, mass: 0.8 }}
+              exit={{ x: -400, opacity: 0, skewX: 20 }}
+              transition={{ type: "spring", stiffness: 120, damping: 14, mass: 0.5 }}
             >
                {/* Language Tag */}
                <div className="absolute top-4 left-5">
@@ -191,14 +193,6 @@ export default function CampaignShowcase() {
                </div>
 
                {/* Background Header Text (Behind Product) */}
-               {/* We create a duplicate layer with lower z-index for the background text if we want it strictly behind, 
-                   but since we want it part of the slide animation, we can manage z-index here relative to siblings or use `mix-blend-mode`.
-                   The product is Z-10. This container is Z-20. 
-                   To put text *behind* the product but still animate with this block, we need to be clever.
-                   
-                   Actually, simplest way for "Right to Left" seamless swipe is to have everything on top or mixed.
-                   Let's use specific Z-indexes for elements inside this motion div.
-                */}
                
                {/* Traffic Line Decoration */}
                <div 
@@ -248,7 +242,7 @@ export default function CampaignShowcase() {
             style={{ backgroundColor: currentVariant.accent }}
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 3.5, ease: "linear" }}
+            transition={{ duration: 1.8, ease: "linear" }} // Matches the 1.8s interval
           />
 
         </div>
