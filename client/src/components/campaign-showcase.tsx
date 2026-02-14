@@ -1,0 +1,247 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import sonyLogo from "@assets/sony_logo_1771056418315.png";
+import headphoneImg from "@assets/WH1000XM6_Primary_image_Midnight_Blue-removebg-preview_1771056418315.png";
+
+const campaigns = [
+  {
+    id: 'hi',
+    langName: 'HINDI',
+    font: "'Noto Sans Devanagari', sans-serif",
+    text: {
+      header: "TRAFFIC",
+      body: "शिफ्ट ख़त्म।\nशोर जारी।",
+      final: "मेहनत को सम्मान।",
+      sub: "शांति के लिए निर्मित"
+    }
+  },
+  {
+    id: 'ta',
+    langName: 'TAMIL',
+    font: "'Noto Sans Tamil', sans-serif",
+    text: {
+      header: "TRAFFIC",
+      body: "வேலை ஓய்ந்தது.\nஇரைச்சல் ஓயவில்லை.",
+      final: "உழைப்பிற்கு மரியாதை.",
+      sub: "அமைதிக்காகவே உருவானது"
+    }
+  },
+  {
+    id: 'te',
+    langName: 'TELUGU',
+    font: "'Noto Sans Telugu', sans-serif",
+    text: {
+      header: "TRAFFIC",
+      body: "షిఫ్ట్ అయిపోయింది.\nగోల ఆగలేదు.",
+      final: "కష్టానికి గౌరవం.",
+      sub: "నిశ్శబ్దం కోసం రూపొందించబడింది"
+    }
+  },
+  {
+    id: 'ml',
+    langName: 'MALAYALAM',
+    font: "'Noto Sans Malayalam', sans-serif",
+    text: {
+      header: "TRAFFIC",
+      body: "ജോലി കഴിഞ്ഞു.\nബഹളം ഒഴിഞ്ഞില്ല.",
+      final: "അധ്വാനത്തെ മാനിക്കുക.",
+      sub: "നിശബ്ദതയ്ക്കായി നിർമ്മിച്ചത്"
+    }
+  },
+  {
+    id: 'kn',
+    langName: 'KANNADA',
+    font: "'Noto Sans Kannada', sans-serif",
+    text: {
+      header: "TRAFFIC",
+      body: "ಕೆಲಸ ಮುಗಿದಿದೆ.\nಗದ್ದಲ ಮುಗಿದಿಲ್ಲ.",
+      final: "ಪರಿಶ್ರಮಕ್ಕೆ ಗೌರವ.",
+      sub: "ಮೌನಕ್ಕಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ"
+    }
+  }
+];
+
+const variants = [
+  {
+    name: "Industrial",
+    bg: "#000000",
+    accent: "#58a6ff", // Blue
+    traffic: "#ff3333", // Red
+  },
+  {
+    name: "Midnight",
+    bg: "#051324",
+    accent: "#64ffda", // Teal
+    traffic: "#ff0080", // Hot Pink
+  },
+  {
+    name: "Forest",
+    bg: "#0A1F0D",
+    accent: "#adff2f", // Green Yellow
+    traffic: "#ff9100", // Orange
+  },
+  {
+    name: "Velvet",
+    bg: "#1a0b2e",
+    accent: "#e0aaff", // Lavender
+    traffic: "#00f2ff", // Cyan
+  }
+];
+
+export default function CampaignShowcase() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % (campaigns.length * variants.length));
+    }, 3000); // Change every 3 seconds
+    return () => clearInterval(timer);
+  }, []);
+
+  const variantIndex = Math.floor(index / campaigns.length) % variants.length;
+  const campaignIndex = index % campaigns.length;
+
+  const currentVariant = variants[variantIndex];
+  const currentCampaign = campaigns[campaignIndex];
+
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center relative p-8">
+      {/* Background Ambience */}
+      <motion.div 
+        animate={{ backgroundColor: currentVariant.bg }}
+        className="absolute inset-0 transition-colors duration-1000 ease-in-out"
+      />
+      
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+
+      {/* Info Overlay */}
+      <div className="absolute top-12 left-0 right-0 z-20 text-center space-y-2 pointer-events-none">
+         <motion.div
+           initial={{ opacity: 0, y: -20 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border-white/10"
+         >
+           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+           <span className="text-xs font-medium text-white/80">AI Analyzing Trends</span>
+         </motion.div>
+         <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-lg">
+           One Concept. <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">Limitless Scale.</span>
+         </h2>
+         <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
+           Instantly generate culturally relevant designs across multiple languages and aesthetic modes.
+         </p>
+      </div>
+
+      {/* The Ad Card */}
+      <motion.div
+        layout
+        className="relative z-10 mt-16"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div 
+          className="w-[300px] h-[500px] md:w-[340px] md:h-[580px] rounded-xl overflow-hidden shadow-2xl relative border border-white/10 transition-colors duration-1000"
+          style={{ backgroundColor: currentVariant.bg }}
+        >
+          {/* Top Bar */}
+          <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/80 to-transparent z-20 flex items-center justify-end px-5">
+             <img src={sonyLogo} alt="Sony" className="h-4 opacity-90 invert brightness-0" style={{ filter: 'brightness(0) invert(1)' }} />
+          </div>
+
+          {/* Language Tag */}
+          <div className="absolute top-4 left-5 z-30">
+            <Badge variant="outline" className="bg-black/20 backdrop-blur-md border-white/20 text-white/80 text-[10px] tracking-wider">
+              {currentCampaign.langName}
+            </Badge>
+          </div>
+
+          {/* Variant Tag (Helper) */}
+          <div className="absolute top-4 left-20 z-30">
+             <Badge variant="outline" className="bg-black/20 backdrop-blur-md border-white/20 text-white/50 text-[10px] tracking-wider" style={{ color: currentVariant.accent }}>
+              {currentVariant.name} MODE
+            </Badge>
+          </div>
+
+          {/* Content Container */}
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={`${currentCampaign.id}-${currentVariant.name}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex flex-col items-center justify-center p-6"
+            >
+               {/* Traffic Line Decoration */}
+               <div 
+                 className="absolute top-[20%] w-[120%] h-[2px] shadow-[0_0_10px_currentColor] transform -rotate-12"
+                 style={{ backgroundColor: currentVariant.traffic, color: currentVariant.traffic }}
+               />
+               
+               {/* Traffic Text */}
+               <h3 
+                 className="absolute top-[18%] text-4xl font-bold z-0 opacity-20 select-none"
+                 style={{ color: currentVariant.traffic, fontFamily: 'Inter' }}
+               >
+                 {currentCampaign.text.header}
+               </h3>
+
+               {/* Product Image */}
+               <motion.img 
+                  src={headphoneImg} 
+                  alt="Headphones"
+                  className="w-64 h-auto object-contain relative z-10 drop-shadow-2xl"
+                  initial={{ y: 20, scale: 0.95 }}
+                  animate={{ y: 0, scale: 1 }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }}
+               />
+
+               {/* Text Content */}
+               <div className="mt-8 text-center relative z-20 w-full">
+                  <h4 className="text-white/40 text-xs tracking-[0.2em] mb-2 font-inter uppercase">WH-1000XM5</h4>
+                  
+                  <motion.p 
+                    className="text-2xl font-bold leading-tight mb-2 whitespace-pre-line"
+                    style={{ 
+                      color: "#fff", 
+                      fontFamily: currentCampaign.font
+                    }}
+                  >
+                    {currentCampaign.text.final}
+                  </motion.p>
+                  
+                  <motion.p 
+                    className="text-lg font-bold"
+                    style={{ color: currentVariant.accent, fontFamily: currentCampaign.font }}
+                  >
+                    {currentCampaign.text.sub}
+                  </motion.p>
+               </div>
+
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Progress Bar */}
+          <motion.div 
+            key={index} // Reset animation on index change
+            className="absolute bottom-0 left-0 h-1 bg-white z-50"
+            style={{ backgroundColor: currentVariant.accent }}
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 3, ease: "linear" }}
+          />
+
+        </div>
+      </motion.div>
+    </div>
+  );
+}

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Upload, Wand2, Globe, Sparkles } from "lucide-react";
-import abstractHero from "@/assets/abstract-hero.png";
+import CampaignShowcase from "@/components/campaign-showcase";
 
 export default function InputView() {
   const [, setLocation] = useLocation();
@@ -26,7 +26,7 @@ export default function InputView() {
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full lg:w-1/2 p-8 lg:p-12 overflow-y-auto z-10"
+        className="w-full lg:w-1/2 p-8 lg:p-12 overflow-y-auto z-10 custom-scrollbar"
       >
         <div className="max-w-xl mx-auto space-y-8">
           <div className="space-y-2">
@@ -121,23 +121,12 @@ export default function InputView() {
 
       {/* Right: Visual Section */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="hidden lg:flex w-1/2 relative bg-black items-center justify-center overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="hidden lg:flex w-1/2 relative bg-black items-center justify-center overflow-hidden border-l border-white/10"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-blue-600/20 mix-blend-overlay z-10 pointer-events-none" />
-        <img 
-          src={abstractHero} 
-          alt="Abstract 3D Visual" 
-          className="w-full h-full object-cover opacity-80 animate-float scale-110"
-        />
-        <div className="absolute bottom-12 left-12 z-20 max-w-md">
-          <blockquote className="font-display text-3xl font-medium leading-tight text-white mb-4">
-            "Design is not just what it looks like and feels like. Design is how it works."
-          </blockquote>
-          <cite className="text-muted-foreground not-italic">— Steve Jobs</cite>
-        </div>
+        <CampaignShowcase />
       </motion.div>
     </div>
   );
