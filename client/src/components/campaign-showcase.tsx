@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import sonyLogo from "@assets/sony_logo_1771056418315.png";
 import headphoneImg from "@assets/WH1000XM6_Primary_image_Midnight_Blue-removebg-preview_1771056418315.png";
@@ -96,7 +95,7 @@ export default function CampaignShowcase() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % (campaigns.length * variants.length));
-    }, 3000); // Change every 3 seconds
+    }, 3500); // Slightly slower to appreciate the animation
     return () => clearInterval(timer);
   }, []);
 
@@ -131,7 +130,7 @@ export default function CampaignShowcase() {
            One Concept. <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">Limitless Scale.</span>
          </h2>
          <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
-           Instantly generate culturally relevant designs across multiple languages and aesthetic modes.
+           Instantly generate culturally relevant designs across multiple languages.
          </p>
       </div>
 
@@ -152,92 +151,104 @@ export default function CampaignShowcase() {
              <img src={sonyLogo} alt="Sony" className="h-4 opacity-90 invert brightness-0" style={{ filter: 'brightness(0) invert(1)' }} />
           </div>
 
-          {/* Language Tag */}
-          <div className="absolute top-4 left-5 z-30">
-            <Badge variant="outline" className="bg-black/20 backdrop-blur-md border-white/20 text-white/80 text-[10px] tracking-wider">
-              {currentCampaign.langName}
-            </Badge>
+          {/* Persistent Product Image (Outside AnimatePresence) */}
+          <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+             <motion.img 
+                src={headphoneImg} 
+                alt="Headphones"
+                className="w-64 h-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                animate={{ 
+                  y: [0, -10, 0],
+                }}
+                transition={{ 
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+             />
           </div>
 
-          {/* Variant Tag (Helper) */}
-          <div className="absolute top-4 left-20 z-30">
-             <Badge variant="outline" className="bg-black/20 backdrop-blur-md border-white/20 text-white/50 text-[10px] tracking-wider" style={{ color: currentVariant.accent }}>
-              {currentVariant.name} MODE
-            </Badge>
-          </div>
-
-          {/* Content Container */}
-          <AnimatePresence mode="wait">
+          {/* Dynamic Content Layer */}
+          <AnimatePresence mode="popLayout">
             <motion.div 
               key={`${currentCampaign.id}-${currentVariant.name}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 flex flex-col items-center justify-center p-6"
+              className="absolute inset-0 flex flex-col items-center justify-center p-6 z-20"
+              initial={{ x: 300, opacity: 0, skewX: -10 }}
+              animate={{ x: 0, opacity: 1, skewX: 0 }}
+              exit={{ x: -300, opacity: 0, skewX: 10 }}
+              transition={{ type: "spring", stiffness: 70, damping: 15, mass: 0.8 }}
             >
+               {/* Language Tag */}
+               <div className="absolute top-4 left-5">
+                 <Badge variant="outline" className="bg-black/20 backdrop-blur-md border-white/20 text-white/80 text-[10px] tracking-wider">
+                   {currentCampaign.langName}
+                 </Badge>
+               </div>
+               <div className="absolute top-4 left-20">
+                 <Badge variant="outline" className="bg-black/20 backdrop-blur-md border-white/20 text-white/50 text-[10px] tracking-wider" style={{ color: currentVariant.accent }}>
+                    {currentVariant.name}
+                 </Badge>
+               </div>
+
+               {/* Background Header Text (Behind Product) */}
+               {/* We create a duplicate layer with lower z-index for the background text if we want it strictly behind, 
+                   but since we want it part of the slide animation, we can manage z-index here relative to siblings or use `mix-blend-mode`.
+                   The product is Z-10. This container is Z-20. 
+                   To put text *behind* the product but still animate with this block, we need to be clever.
+                   
+                   Actually, simplest way for "Right to Left" seamless swipe is to have everything on top or mixed.
+                   Let's use specific Z-indexes for elements inside this motion div.
+                */}
+               
                {/* Traffic Line Decoration */}
                <div 
-                 className="absolute top-[20%] w-[120%] h-[2px] shadow-[0_0_10px_currentColor] transform -rotate-12"
+                 className="absolute top-[20%] w-[120%] h-[2px] shadow-[0_0_10px_currentColor] transform -rotate-12 -z-10"
                  style={{ backgroundColor: currentVariant.traffic, color: currentVariant.traffic }}
                />
                
-               {/* Traffic Text */}
+               {/* Traffic Text (Behind Product) */}
                <h3 
-                 className="absolute top-[18%] text-4xl font-bold z-0 opacity-20 select-none"
+                 className="absolute top-[18%] text-4xl font-bold -z-10 opacity-20 select-none whitespace-nowrap"
                  style={{ color: currentVariant.traffic, fontFamily: 'Inter' }}
                >
                  {currentCampaign.text.header}
                </h3>
 
-               {/* Product Image */}
-               <motion.img 
-                  src={headphoneImg} 
-                  alt="Headphones"
-                  className="w-64 h-auto object-contain relative z-10 drop-shadow-2xl"
-                  initial={{ y: 20, scale: 0.95 }}
-                  animate={{ y: 0, scale: 1 }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut"
-                  }}
-               />
+               {/* Spacer to push text below product */}
+               <div className="h-48"></div>
 
-               {/* Text Content */}
-               <div className="mt-8 text-center relative z-20 w-full">
+               {/* Bottom Text Content */}
+               <div className="mt-12 text-center w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 rounded-xl backdrop-blur-[2px]">
                   <h4 className="text-white/40 text-xs tracking-[0.2em] mb-2 font-inter uppercase">WH-1000XM5</h4>
                   
-                  <motion.p 
-                    className="text-2xl font-bold leading-tight mb-2 whitespace-pre-line"
+                  <p 
+                    className="text-2xl font-bold leading-tight mb-2 whitespace-pre-line drop-shadow-lg"
                     style={{ 
                       color: "#fff", 
                       fontFamily: currentCampaign.font
                     }}
                   >
                     {currentCampaign.text.final}
-                  </motion.p>
+                  </p>
                   
-                  <motion.p 
-                    className="text-lg font-bold"
+                  <p 
+                    className="text-lg font-bold drop-shadow-md"
                     style={{ color: currentVariant.accent, fontFamily: currentCampaign.font }}
                   >
                     {currentCampaign.text.sub}
-                  </motion.p>
+                  </p>
                </div>
-
             </motion.div>
           </AnimatePresence>
 
           {/* Progress Bar */}
           <motion.div 
-            key={index} // Reset animation on index change
+            key={index}
             className="absolute bottom-0 left-0 h-1 bg-white z-50"
             style={{ backgroundColor: currentVariant.accent }}
             initial={{ width: "0%" }}
             animate={{ width: "100%" }}
-            transition={{ duration: 3, ease: "linear" }}
+            transition={{ duration: 3.5, ease: "linear" }}
           />
 
         </div>
