@@ -95,20 +95,25 @@ body {
   background-attachment: fixed;
 }
 
-/* Glassmorphism Utilities */
-.glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
 
-.glass-card {
-  @apply glass rounded-xl shadow-2xl;
-}
+  .glass-card {
+    @apply rounded-xl shadow-2xl;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
 
-.glass-input {
-  @apply bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300;
+  .glass-input {
+    @apply bg-black/20 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300;
+  }
 }
 
 /* Custom Scrollbar */
