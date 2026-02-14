@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 2.0 Flash Ad Matrix</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-primary: #b0fb5d;
+            --neon-secondary: #00f0ff;
+            --bg-dark: #0a0a0a;
+            --card-width: 360px;
+            --card-height: 620px;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-dark);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden; /* Prevent scroll, use carousel */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- UI OVERLAYS --- */
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; width: 100%;
+            padding: 20px 40px; display: flex; justify-content: space-between;
+            z-index: 1000; pointer-events: none;
+        }
+        .brand { 
+            font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; pointer-events: auto;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .brand span { color: var(--neon-primary); }
+
+        /* --- INPUT FORM --- */
+        #setup-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+            z-index: 2000; display: flex; justify-content: center; align-items: center;
+        }
+
+        .modal-card {
+            background: #111; border: 1px solid #333; padding: 40px;
+            border-radius: 24px; width: 450px; max-width: 90%;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.8);
+            position: relative; overflow: hidden;
+        }
+        
+        .modal-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--neon-primary), var(--neon-secondary));
+        }
+
+        .form-group { margin-bottom: 25px; }
+        label { display: block; margin-bottom: 10px; font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        
+        input[type="text"], input[type="password"] {
+            width: 100%; padding: 16px; background: #000; border: 1px solid #333;
+            color: white; border-radius: 12px; font-family: inherit; font-size: 1rem;
+            outline: none; box-sizing: border-box; transition: all 0.3s;
+        }
+        input:focus { border-color: var(--neon-primary); box-shadow: 0 0 15px rgba(176, 251, 93, 0.1); }
+        
+        .file-drop {
+            border: 2px dashed #333; padding: 30px 20px; text-align: center;
+            border-radius: 12px; cursor: pointer; transition: 0.3s; background: #080808;
+        }
+        .file-drop:hover { border-color: var(--neon-secondary); background: #0f0f0f; }
+
+        .btn-main {
+            width: 100%; padding: 20px; background: white; color: black;
+            border: none; border-radius: 12px; font-weight: 800; font-size: 1.1rem;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .btn-main:hover { transform: scale(1.02); background: var(--neon-primary); }
+
+        /* --- STAGE --- */
+        #stage {
+            flex: 1;
+            position: relative;
+            perspective: 1500px; /* Deep 3D space */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0; /* Hidden initially */
+            transition: opacity 1s;
+        }
+
+        .carousel-track {
+            position: absolute;
+            display: flex;
+            gap: 60px; /* Spacing between cards */
+            align-items: center;
+            /* No predefined width; handled by JS translation */
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* --- THE AD CARD --- */
+        .ad-card {
+            width: var(--card-width);
+            height: var(--card-height);
+            background: #000;
+            border-radius: 30px;
+            position: relative;
+            flex-shrink: 0;
+            transform-style: preserve-3d;
+            border: 1px solid #333;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: visible; /* Allow product to pop out */
+        }
+
+        /* Active State (Center) */
+        .ad-card.active {
+            transform: scale(1.1) translateZ(50px);
+            border-color: var(--neon-primary);
+            box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+            opacity: 1;
+            z-index: 10;
+        }
+
+        /* Inactive State (Sides) */
+        .ad-card:not(.active) {
+            transform: scale(0.85) rotateY(10deg);
+            opacity: 0.3;
+            filter: blur(2px) grayscale(100%);
+            z-index: 1;
+        }
+
+        /* LAYERS */
+        .layer-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 30px; overflow: hidden; z-index: 0;
+        }
+        .layer-bg svg { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+
+        .layer-product {
+            position: absolute; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); /* Perfectly Centered */
+            width: 90%; 
+            max-height: 50%; 
+            object-fit: contain;
+            z-index: 5;
+            filter: drop-shadow(0 30px 40px rgba(0,0,0,0.6));
+            transition: transform 0.4s ease;
+        }
+        /* Pop out effect on hover of active card */
+        .ad-card.active:hover .layer-product {
+            transform: translate(-50%, -55%) scale(1.05);
+        }
+
+        .layer-content {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 30px; box-sizing: border-box;
+            background: linear-gradient(to top, rgba(0,0,0,1) 10%, rgba(0,0,0,0.8) 50%, transparent 100%);
+            border-radius: 0 0 30px 30px;
+            z-index: 10;
+            transform: translateZ(20px); /* Push text forward */
+        }
+
+        .meta-tag {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--neon-primary); margin-bottom: 10px; display: block;
+            font-weight: 700;
+        }
+
+        .headline {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 2rem; line-height: 1.1; margin: 0 0 10px 0;
+            color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .body-copy {
+            font-size: 0.9rem; color: #ccc; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            position: fixed; bottom: 40px; width: 100%;
+            display: flex; justify-content: center; gap: 20px;
+            z-index: 500; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        .controls.visible { opacity: 1; pointer-events: auto; }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; width: 60px; height: 60px; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; transition: 0.2s; backdrop-filter: blur(10px);
+        }
+        .nav-btn:hover { background: white; color: black; transform: scale(1.1); }
+
+        /* --- LOADER --- */
+        .loader-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1500;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 4px solid #333;
+            border-top: 4px solid var(--neon-primary); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    </style>
+    <script type="importmap">
+      { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+    </script>
+</head>
+<body>
+
+    <nav class="nav-overlay">
+        <div class="brand">GEMINI <span>ADS 2.0</span></div>
+    </nav>
+
+    <div id="setup-modal">
+        <div class="modal-card">
+            <h2 style="margin-top:0">New Campaign</h2>
+            
+            <div class="form-group">
+                <label>Gemini API Key</label>
+                <input type="password" id="apiKey" placeholder="Required for generation">
+            </div>
+
+            <div class="form-group">
+                <label>Product (Transparent PNG)</label>
+                <input type="file" id="productFile" class="file-drop" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label>Campaign Context</label>
+                <input type="text" id="context" value="Late night snack cravings" placeholder="What is the product for?">
+            </div>
+
+            <div class="form-group">
+                <label>Target Regions</label>
+                <input type="text" id="regions" value="Mumbai, Delhi, Bangalore, Chennai, Hyderabad" placeholder="Cities">
+            </div>
+
+            <button id="runBtn" class="btn-main">Generate with Gemini 2.0 Flash</button>
+        </div>
+    </div>
+
+    <div class="loader-overlay" id="loader">
+        <div class="spinner"></div>
+        <div id="loading-text" style="font-weight: 600; letter-spacing: 1px;">INITIALIZING AI...</div>
+    </div>
+
+    <div id="stage">
+        <div class="carousel-track" id="track">
+            </div>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="nav-btn" id="prevBtn">←</button>
+        <button class="nav-btn" id="nextBtn">→</button>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // --- STATE ---
+        let currentIndex = 0;
+        let cardsData = [];
+        let productImgSrc = "";
+
+        // --- UTILS ---
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        // --- CORE GENERATION ---
+        document.getElementById('runBtn').addEventListener('click', async () => {
+            const apiKey = document.getElementById('apiKey').value;
+            const context = document.getElementById('context').value;
+            const regions = document.getElementById('regions').value;
+            const fileInput = document.getElementById('productFile');
+
+            if (!apiKey || fileInput.files.length === 0) {
+                alert("API Key and Image are required.");
+                return;
+            }
+
+            // UI Transition
+            document.getElementById('setup-modal').style.display = 'none';
+            document.getElementById('loader').style.display = 'flex';
+            document.getElementById('loading-text').innerText = "GEMINI 2.0 FLASH IS THINKING...";
+
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                // Note: Using gemini-2.0-flash as it is the current robust model
+                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+                const base64Img = await fileToBase64(fileInput.files[0]);
+                productImgSrc = base64Img;
+
+                const imagePart = {
+                    inlineData: {
+                        data: base64Img.split(',')[1],
+                        mimeType: fileInput.files[0].type
+                    }
+                };
+
+                const prompt = `
+                Role: Senior Creative Director for India.
+                Campaign Context: ${context}
+                Target Cities: ${regions}
+                
+                TASK:
+                Create a JSON array of ad variations for each city.
+                
+                REQUIREMENTS:
+                1. **Language:** Use the city's local language (Hindi, Kannada, Tamil, etc.) but written in **ENGLISH ALPHABETS** (Transliteration).
+                2. **Trend:** Identify a specific micro-trend/vibe for that city.
+                3. **Visuals:** Write **SVG CODE** for a background pattern that fits the vibe. Dark mode, neon accents.
+                4. **Colors:** Extract 2 dominant colors from the product image to use as accents.
+                
+                OUTPUT JSON FORMAT:
+                [
+                    {
+                        "city": "City Name",
+                        "trend": "Trend Name",
+                        "headline": "Transliterated Punchy Headline",
+                        "body": "Short English copy explaining the benefit in local context.",
+                        "svg": "<svg viewBox='0 0 100 100' preserveAspectRatio='none'>...</svg>",
+                        "accent": "#hexcode"
+                    }
+                ]
+                `;
+
+                const result = await model.generateContent([prompt, imagePart]);
+                const responseText = result.response.text();
+                const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                
+                cardsData = JSON.parse(cleanJson);
+                
+                buildCarousel();
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('stage').style.opacity = 1;
+                document.getElementById('controls').classList.add('visible');
+
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+                location.reload();
+            }
+        });
+
+        // --- CAROUSEL RENDERER ---
+        function buildCarousel() {
+            const track = document.getElementById('track');
+            track.innerHTML = '';
+
+            cardsData.forEach((data, index) => {
+                const card = document.createElement('div');
+                card.className = `ad-card ${index === 0 ? 'active' : ''}`;
+                card.dataset.index = index;
+                
+                card.innerHTML = `
+                    <div class="layer-bg" style="fill: ${data.accent}">${data.svg}</div>
+                    <img src="${productImgSrc}" class="layer-product">
+                    <div class="layer-content">
+                        <span class="meta-tag" style="color:${data.accent}">${data.city} • ${data.trend}</span>
+                        <h2 class="headline">${data.headline}</h2>
+                        <p class="body-copy">${data.body}</p>
+                    </div>
+                `;
+                
+                // Allow clicking side cards to navigate
+                card.addEventListener('click', () => {
+                    if (currentIndex !== index) {
+                        currentIndex = index;
+                        updateCarousel();
+                    }
+                });
+
+                track.appendChild(card);
+            });
+
+            updateCarousel();
+        }
+
+        // --- CAROUSEL LOGIC ---
+        function updateCarousel() {
+            const track = document.getElementById('track');
+            const cards = document.querySelectorAll('.ad-card');
+            
+            // Logic: Calculate translation to keep CurrentIndex in the exact center of screen
+            // Card width + gap = 360 + 60 = 420px
+            const cardStride = 420; 
+            
+            // Center of screen is 0 (relative to parent). 
+            // We need to shift left by currentIndex * stride.
+            const offset = -(currentIndex * cardStride);
+            
+            track.style.transform = `translateX(${offset}px)`;
+
+            cards.forEach((card, index) => {
+                if (index === currentIndex) {
+                    card.classList.add('active');
+                    // Reset rotation
+                    gsap.to(card, { rotateY: 0, scale: 1.1, opacity: 1, filter: 'blur(0px) grayscale(0%)', duration: 0.5 });
+                } else {
+                    card.classList.remove('active');
+                    // Rotate towards center
+                    const rotation = index < currentIndex ? 15 : -15; // Left cards look right, Right cards look left
+                    gsap.to(card, { rotateY: rotation, scale: 0.85, opacity: 0.3, filter: 'blur(3px) grayscale(100%)', duration: 0.5 });
+                }
+            });
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentIndex < cardsData.length - 1) {
+                currentIndex++;
+                updateCarousel();
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && currentIndex < cardsData.length - 1) {
+                currentIndex++;
+                updateCarousel();
+            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+
+    </script>
+</body>
+</html>
