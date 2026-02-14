@@ -256,7 +256,7 @@ export default function CampaignShowcase() {
             transition={{ duration: 1.1, ease: "linear" }}
           />
 
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );
